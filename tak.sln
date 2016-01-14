@@ -1,0 +1,63 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakEngine", "TakEngine\TakEngine.csproj", "{59BFCFC2-704A-47E2-8F99-B6F78C823DA0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakConsole", "TakConsole\TakConsole.csproj", "{C9CFD726-7DF6-4EC4-B264-15F1089E7C5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakGame_WinForms", "TakGame_WinForms\TakGame_WinForms.csproj", "{C8CAC408-3A67-4080-BC64-034708427047}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakService", "TakService\TakService.csproj", "{B94C1E53-9FA0-48C4-9BF6-28E644F890EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakServiceTest", "TakServiceTest\TakServiceTest.csproj", "{320F6443-3772-4455-95F6-9284BD23A2BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PublishScripts", "PublishScripts", "{0A7DB83A-6369-4A3C-99AD-AFAA1B722F6F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{A94F8889-5273-408E-984A-40D2AB283264}"
+	ProjectSection(SolutionItems) = preProject
+		PublishScripts\Scripts\Deploy-AzureResourceGroup.ps1 = PublishScripts\Scripts\Deploy-AzureResourceGroup.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{AC72CDF9-9745-4CF3-A645-237143B54177}"
+	ProjectSection(SolutionItems) = preProject
+		PublishScripts\Templates\TakServiceTest.json = PublishScripts\Templates\TakServiceTest.json
+		PublishScripts\Templates\TakServiceTest.param.dev.json = PublishScripts\Templates\TakServiceTest.param.dev.json
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59BFCFC2-704A-47E2-8F99-B6F78C823DA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59BFCFC2-704A-47E2-8F99-B6F78C823DA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59BFCFC2-704A-47E2-8F99-B6F78C823DA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59BFCFC2-704A-47E2-8F99-B6F78C823DA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9CFD726-7DF6-4EC4-B264-15F1089E7C5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9CFD726-7DF6-4EC4-B264-15F1089E7C5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9CFD726-7DF6-4EC4-B264-15F1089E7C5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9CFD726-7DF6-4EC4-B264-15F1089E7C5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8CAC408-3A67-4080-BC64-034708427047}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8CAC408-3A67-4080-BC64-034708427047}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8CAC408-3A67-4080-BC64-034708427047}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8CAC408-3A67-4080-BC64-034708427047}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B94C1E53-9FA0-48C4-9BF6-28E644F890EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B94C1E53-9FA0-48C4-9BF6-28E644F890EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B94C1E53-9FA0-48C4-9BF6-28E644F890EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B94C1E53-9FA0-48C4-9BF6-28E644F890EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{320F6443-3772-4455-95F6-9284BD23A2BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{320F6443-3772-4455-95F6-9284BD23A2BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{320F6443-3772-4455-95F6-9284BD23A2BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{320F6443-3772-4455-95F6-9284BD23A2BC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A94F8889-5273-408E-984A-40D2AB283264} = {0A7DB83A-6369-4A3C-99AD-AFAA1B722F6F}
+		{AC72CDF9-9745-4CF3-A645-237143B54177} = {0A7DB83A-6369-4A3C-99AD-AFAA1B722F6F}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,40 @@
+﻿{This is an example TakPGN file for testing the database loader thingy}
+[Size "5x5"]
+[P1 "AI #1"]
+[P2 "AI #2"]
+[Result "Player 2 wins by road"]
+
+1. b4 c4
+2. a5 d2
+3. c1 c2 {Testing a simple in-line comment}
+4. d3 b1
+5. e2 e3
+6. a1 d5
+7. a4 b2
+8. a2 b4< {The first stack move of the game!}
+9. d4 b4
+10. b3 e4
+11. d1 c5
+12. e1 b5
+13. a5- {Increased AI difficulty before this move} 
+       b4<
+14. a2> b1>
+15. c4+ 4a4>112
+16. d1< c2-
+17. a2 4c1<22
+18. c3 e3<
+19. c3> d2+
+20. c2 d2
+21. c2> c2
+22. 2d2<2 d2
+23. 3c2>3 c2
+24. 4d2<4 d2
+25. Cd1 d2<
+26. a2- 2b1<2
+27. 2b2>2 d5<
+28. b4> 3c5-111
+29. c3- 3c4-12
+30. Sb2 5c2+113
+31. 1c3+ 5c2+221
+32. e5 a5 
+       0-R

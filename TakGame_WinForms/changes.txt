@@ -1,0 +1,19 @@
+﻿Most recent version at top
+
+Version 1.1.2
+=============
+NEW: All official game sizes supported, except that number of cap stones for 7x7 is fixed
+NEW: Added keyboard shortcut to enter commands manually
+NEW: Added Move History window
+NEW: Added Save / Open / Save As commands
+NEW: Added navigation
+CHANGED: Logic/UI changes to adapt to board coordinate system changes.  0,0 is now the bottom left
+         instead of the top left corner
+
+Version 1.0.1
+=============
+FIXED: Attempting to pick up more than one stone from a stack would cause the entire stack to be picked up
+
+Version 1.0.0
+=============
+Initial release

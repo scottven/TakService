@@ -1,0 +1,16 @@
+﻿Most recent version at top
+
+Version 1.1.2
+==============
+NEW: Added support for parsing notation
+NEW: Added support for parsing .ptn files
+CHANGED: Move notation now conforms to PTN
+CHANGED: BoardPosition 0,0 is now the bottom left corner instead of the top left corner
+
+Version 1.0.1
+==============
+(no changes)
+
+Version 1.0.0
+==============
+Initial release
