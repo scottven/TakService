@@ -4,7 +4,7 @@
     <table><tr><td>
     Paste PTN here:<br />
     <asp:TextBox ID="ptn" runat="server" Rows="30" TextMode="MultiLine"></asp:TextBox><br />
-    <asp:Button ID="go" runat="server" Text="Go!" OnClick="go_Click" /></td><td></td>
+    <asp:Button ID="go" runat="server" Text="Go!" OnClick="go_Click" /></td><td valign="top">
     The next move is:
     <asp:TextBox ID="move" runat="server"></asp:TextBox></td>
     </tr></table>
