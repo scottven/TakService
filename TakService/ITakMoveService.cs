@@ -17,7 +17,7 @@ namespace TakService
 
         [OperationContract]
         [WebGet]
-        string GetMove(string ptn);
+        string GetMove(string ptn, int aiLevel = 3);
 
   //      [OperationContract]
    //     CompositeType GetDataUsingDataContract(CompositeType composite);

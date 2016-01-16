@@ -16,7 +16,7 @@ namespace TakService
     public class TakMoveService : ITakMoveService
     {
         
-        public string GetMove(string ptn)
+        public string GetMove(string ptn, int aiLevel = 3)
         {
             try {
                 var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
@@ -39,7 +39,7 @@ namespace TakService
                     move.MakeMove(_game);
                     _game.Ply++;
                 }
-                _ai.MaxDepth = 3;
+                _ai.MaxDepth = aiLevel;
                 var next_move = _ai.FindGoodMove(_game);
                 return next_move.Notate();
             } catch (Exception ex)
