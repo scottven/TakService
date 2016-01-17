@@ -49,6 +49,15 @@ namespace TakService {
         protected global::System.Web.UI.WebControls.TextBox aiLevel;
         
         /// <summary>
+        /// flatScore control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox flatScore;
+        
+        /// <summary>
         /// move control.
         /// </summary>
         /// <remarks>

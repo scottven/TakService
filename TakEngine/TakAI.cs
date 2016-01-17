@@ -40,11 +40,12 @@ namespace TakEngine
 
         public BoardPosition[] RandomPositions { get { return _randomPositions; } }
         public BoardPosition[] NormalPositions { get { return _normalPositions; } }
-        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth)
+        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth, int flatScore = 9000)
         {
             _maxDepth = maxDepth;
             _rand = new Random();
             _singleThreadData = new AIThreadData(boardSize);
+            Evaluator.FlatWinEval = flatScore;
 
             // Initialize list of all legal board positions
             _normalPositions = new BoardPosition[boardSize * boardSize];
@@ -362,7 +363,7 @@ namespace TakEngine
         /// </summary>
         public class Evaluator
         {
-            public const int FlatWinEval = 9000;
+            public static int FlatWinEval;
             FloodFill _flood = new FloodFill();
             int[,] _ids;
 

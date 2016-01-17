@@ -16,19 +16,15 @@ namespace TakService
     public class TakMoveService : ITakMoveService
     {
         
-        public string GetMove(string ptn, int aiLevel = 3)
+        public string GetMove(string ptn, int aiLevel = 3, int flatScore = 9000)
         {
             try {
                 var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
                 TakEngine.Notation.GameRecord _gameRecord = new TakEngine.Notation.GameRecord();
-                //TakEngine.BoardView _boardView;
-                GameState _game;
-                TakAI.Evaluator _evaluator;
-                TakAI _ai;
                 _gameRecord = database.Games[0];
-                _game = GameState.NewGame(_gameRecord.BoardSize);
-                _ai = new TakAI(_game.Size);
-                _evaluator = new TakAI.Evaluator(_game.Size);
+                GameState _game = GameState.NewGame(_gameRecord.BoardSize);
+                TakAI _ai = new TakAI(_game.Size, flatScore);
+                TakAI.Evaluator _evaluator = new TakAI.Evaluator(_game.Size);
                 foreach (var notation in _gameRecord.MoveNotations)
                 {
                     List<IMove> _tempMoveList = new List<IMove>();
