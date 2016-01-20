@@ -14,8 +14,12 @@ namespace TakEngine.Tests
         [TestMethod()]
         public void LoadTPSTest()
         {
-            string tps = "[ x5/x2,121,x2/x5/x,2C,x3/x5 1 4 ]";
-            var game = TakEngine.GameState.LoadTPS(tps);
+            string tps = "[ 1,2,x,x,1/x,1,x,x,x/x,x,x,x,x/x,x,x,2,x/2,x,x,x,x 1 3 ]";
+            string ptn = "[Size \"5\"]\n1. b4 d2\n2. e5 a1\n3. e1 e2\n";
+            var tps_game = TakEngine.GameState.LoadFromTPS(tps);
+            var ptn_game = TakEngine.GameState.LoadFromPTN(ptn);
+            if (tps_game.Board.GetHashCode() == ptn_game.Board.GetHashCode())
+                return;
             Assert.Fail();
         }
     }

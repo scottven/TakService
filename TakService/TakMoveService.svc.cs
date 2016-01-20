@@ -20,33 +20,16 @@ namespace TakService
         {
             try {
                 GameState _game;
-                TakAI _ai;
-                TakAI.Evaluator _evaluator;
                 if (tps)
                 {
-                    _game = GameState.LoadTPS(ptn);
-                    _ai = new TakAI(_game.Size, flatScore);
-                    _evaluator = new TakAI.Evaluator(_game.Size);
+                    _game = GameState.LoadFromTPS(ptn);
+
                 }
                 else //turn-by-turn ptn
                 {
-                    var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
-                    TakEngine.Notation.GameRecord _gameRecord = new TakEngine.Notation.GameRecord();
-                    _gameRecord = database.Games[0];
-                    _game = GameState.NewGame(_gameRecord.BoardSize);
-                    _ai = new TakAI(_game.Size, flatScore);
-                    _evaluator = new TakAI.Evaluator(_game.Size);
-                    foreach (var notation in _gameRecord.MoveNotations)
-                    {
-                        List<IMove> _tempMoveList = new List<IMove>();
-                        TakAI.EnumerateMoves(_tempMoveList, _game, _ai.NormalPositions);
-                        var move = notation.MatchLegalMove(_tempMoveList);
-                        if (null == move)
-                            return string.Format("Illegal move: {0}", notation.Text);
-                        move.MakeMove(_game);
-                        _game.Ply++;
-                    }
+                    _game = GameState.LoadFromPTN(ptn);
                 }
+                TakAI _ai = new TakAI(_game.Size, flatScore);
                 _ai.MaxDepth = aiLevel;
                 var next_move = _ai.FindGoodMove(_game);
                 return next_move.Notate();

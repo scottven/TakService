@@ -90,7 +90,30 @@ namespace TakEngine
             return game;
         }
 
-        public static GameState LoadTPS(string tps)
+        public static GameState LoadFromPTN(string ptn)
+        {
+            var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
+            TakEngine.Notation.GameRecord _gameRecord = new TakEngine.Notation.GameRecord();
+            _gameRecord = database.Games[0];
+            var game = GameState.NewGame(_gameRecord.BoardSize);
+            BoardPosition[] normalPositions = new BoardPosition[game.Size * game.Size];
+            for (int i = 0; i < normalPositions.Length; i++)
+                normalPositions[i] = new BoardPosition(i % game.Size, i / game.Size);
+
+            foreach (var notation in _gameRecord.MoveNotations)
+            {
+                List<IMove> _tempMoveList = new List<IMove>();
+                TakAI.EnumerateMoves(_tempMoveList, game, normalPositions);
+                var move = notation.MatchLegalMove(_tempMoveList);
+                if (null == move)
+                    throw new ApplicationException("Illegal move: " + notation.Text);
+                move.MakeMove(game);
+                game.Ply++;
+            }
+            return game;
+        }
+
+        public static GameState LoadFromTPS(string tps)
         {
             if (tps[0] != '[')
                 throw new ApplicationException("tps doesn't start with [");
@@ -98,7 +121,12 @@ namespace TakEngine
             if (tps[1] == ' ')
                 start = 2;
             int end = tps.Substring(start).IndexOf(' ');
-            string[] rows = tps.Substring(start, end).Split('/');
+            string[] reversed_rows = tps.Substring(start, end).Split('/');
+            string[] rows = new string[reversed_rows.Length];
+            for(int i = 0; i < reversed_rows.Length; i++)
+            {
+                rows[reversed_rows.Length - i - 1] = reversed_rows[i];
+            }
             start += end + 1;
             end = tps.Substring(start).IndexOf(' ');
             int current_player = int.Parse(tps.Substring(start, end));
@@ -146,7 +174,7 @@ namespace TakEngine
 
                             if (k == stack_height - 1)
                             {
-                                game.Board[i, j].Add(Piece.MakePieceID(top, owner));
+                                game.Board[i, space].Add(Piece.MakePieceID(top, owner));
                                 if(top == Piece.Stone_Cap)
                                 {
                                     game.CapRemaining[owner]--;
@@ -158,10 +186,11 @@ namespace TakEngine
                             }
                             else
                             {
-                                game.Board[i, j].Add(Piece.MakePieceID(Piece.Stone_Flat, owner));
+                                game.Board[i, space].Add(Piece.MakePieceID(Piece.Stone_Flat, owner));
                                 game.StonesRemaining[owner]--;
                             }
                         }
+                        space++;
                     }
                 }
             }
