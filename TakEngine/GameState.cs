@@ -90,6 +90,84 @@ namespace TakEngine
             return game;
         }
 
+        public static GameState LoadTPS(string tps)
+        {
+            if (tps[0] != '[')
+                throw new ApplicationException("tps doesn't start with [");
+            int start = 1;
+            if (tps[1] == ' ')
+                start = 2;
+            int end = tps.Substring(start).IndexOf(' ');
+            string[] rows = tps.Substring(start, end).Split('/');
+            start += end + 1;
+            end = tps.Substring(start).IndexOf(' ');
+            int current_player = int.Parse(tps.Substring(start, end));
+            int current_turn = int.Parse(tps.Substring(start + end + 1, 1));
+            if (current_player != 1 && current_player != 2)
+                throw new ApplicationException("player should be 1 or 2");
+            if (tps.Substring(start + end + 2).IndexOf(']') < 0)
+                throw new ApplicationException("tps doesn't end with ]");
+
+            var game = GameState.NewGame(rows.Length);
+            game.Ply = (current_turn - 1) * 2 + (current_player - 1); //silly TPS counts up from 1
+            for(int i = 0; i < game.Size; i++)
+            {
+                string[] spaces = rows[i].Split(',');
+                int space = 0;
+                for(int j = 0; j < spaces.Length; j++)
+                {
+                    if (spaces[j][0] == 'x')
+                    {
+                        int reps = 1;
+                        if (spaces[j].Length == 2)
+                        {
+                            reps = int.Parse(spaces[j][1].ToString());
+                            if (reps < 2 || reps > game.Size)
+                                throw new ApplicationException("repetition out of range: " + spaces[j]);
+                        }
+                        else if (spaces[j].Length != 1)
+                            throw new ApplicationException("incorrect empty space notation: " + spaces[j]);
+                        space += reps;
+                    }
+                    else
+                    {
+                        int stack_height = spaces[j].Length;
+                        int top = Piece.Stone_Flat;
+                        if (spaces[j][stack_height - 1] == 'S' || spaces[j][stack_height - 1] == 'C')
+                        {
+                            stack_height--;
+                            top = spaces[j][stack_height] == 'S' ? Piece.Stone_Standing : Piece.Stone_Cap;
+                        }
+                        for (int k = 0; k < stack_height; k++)
+                        {
+                            int owner = spaces[j][k] == '1' ? 0 : 1;
+                            if (owner == 1 && spaces[j][k] != '2')
+                                throw new ApplicationException("stones in a stack must be owned by player 1 or player 2: " + spaces[j]);
+
+                            if (k == stack_height - 1)
+                            {
+                                game.Board[i, j].Add(Piece.MakePieceID(top, owner));
+                                if(top == Piece.Stone_Cap)
+                                {
+                                    game.CapRemaining[owner]--;
+                                }
+                                else
+                                {
+                                    game.StonesRemaining[owner]--;
+                                }
+                            }
+                            else
+                            {
+                                game.Board[i, j].Add(Piece.MakePieceID(Piece.Stone_Flat, owner));
+                                game.StonesRemaining[owner]--;
+                            }
+                        }
+                    }
+                }
+            }
+            return game;
+        }
+
         public GameState DeepCopy()
         {
             var clone = new GameState();

@@ -26,6 +26,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{
 		PublishScripts\Templates\TakServiceTest.param.dev.json = PublishScripts\Templates\TakServiceTest.param.dev.json
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakEngineTests", "TakEngineTests\TakEngineTests.csproj", "{ECDCCB80-A3F0-4600-ACD2-D4B4B4ADD8F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{320F6443-3772-4455-95F6-9284BD23A2BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{320F6443-3772-4455-95F6-9284BD23A2BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{320F6443-3772-4455-95F6-9284BD23A2BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECDCCB80-A3F0-4600-ACD2-D4B4B4ADD8F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECDCCB80-A3F0-4600-ACD2-D4B4B4ADD8F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECDCCB80-A3F0-4600-ACD2-D4B4B4ADD8F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECDCCB80-A3F0-4600-ACD2-D4B4B4ADD8F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

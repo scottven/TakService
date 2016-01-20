@@ -16,29 +16,42 @@ namespace TakService
     public class TakMoveService : ITakMoveService
     {
         
-        public string GetMove(string ptn, int aiLevel = 3, int flatScore = 9000)
+        public string GetMove(string ptn, int aiLevel = 3, int flatScore = 9000, bool tps = false)
         {
             try {
-                var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
-                TakEngine.Notation.GameRecord _gameRecord = new TakEngine.Notation.GameRecord();
-                _gameRecord = database.Games[0];
-                GameState _game = GameState.NewGame(_gameRecord.BoardSize);
-                TakAI _ai = new TakAI(_game.Size, flatScore);
-                TakAI.Evaluator _evaluator = new TakAI.Evaluator(_game.Size);
-                foreach (var notation in _gameRecord.MoveNotations)
+                GameState _game;
+                TakAI _ai;
+                TakAI.Evaluator _evaluator;
+                if (tps)
                 {
-                    List<IMove> _tempMoveList = new List<IMove>();
-                    TakAI.EnumerateMoves(_tempMoveList, _game, _ai.NormalPositions);
-                    var move = notation.MatchLegalMove(_tempMoveList);
-                    if (null == move)
-                        return string.Format("Illegal move: {0}", notation.Text);
-                    move.MakeMove(_game);
-                    _game.Ply++;
+                    _game = GameState.LoadTPS(ptn);
+                    _ai = new TakAI(_game.Size, flatScore);
+                    _evaluator = new TakAI.Evaluator(_game.Size);
+                }
+                else //turn-by-turn ptn
+                {
+                    var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
+                    TakEngine.Notation.GameRecord _gameRecord = new TakEngine.Notation.GameRecord();
+                    _gameRecord = database.Games[0];
+                    _game = GameState.NewGame(_gameRecord.BoardSize);
+                    _ai = new TakAI(_game.Size, flatScore);
+                    _evaluator = new TakAI.Evaluator(_game.Size);
+                    foreach (var notation in _gameRecord.MoveNotations)
+                    {
+                        List<IMove> _tempMoveList = new List<IMove>();
+                        TakAI.EnumerateMoves(_tempMoveList, _game, _ai.NormalPositions);
+                        var move = notation.MatchLegalMove(_tempMoveList);
+                        if (null == move)
+                            return string.Format("Illegal move: {0}", notation.Text);
+                        move.MakeMove(_game);
+                        _game.Ply++;
+                    }
                 }
                 _ai.MaxDepth = aiLevel;
                 var next_move = _ai.FindGoodMove(_game);
                 return next_move.Notate();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return ex.Message;
             }

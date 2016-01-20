@@ -17,7 +17,7 @@ namespace TakService
         protected void go_Click(object sender, EventArgs e)
         {
             TakMoveService service = new TakMoveService();
-            move.Text = service.GetMove(ptn.Text, Int32.Parse(aiLevel.Text), Int32.Parse(flatScore.Text));
+            move.Text = service.GetMove(ptn.Text, Int32.Parse(aiLevel.Text), Int32.Parse(flatScore.Text), tps_true.Checked);
         }
     }
 }
