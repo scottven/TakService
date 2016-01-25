@@ -174,7 +174,7 @@ namespace TakEngine
 
                             if (k == stack_height - 1)
                             {
-                                game.Board[i, space].Add(Piece.MakePieceID(top, owner));
+                                game.Board[space, i].Add(Piece.MakePieceID(top, owner));
                                 if(top == Piece.Stone_Cap)
                                 {
                                     game.CapRemaining[owner]--;
@@ -186,7 +186,7 @@ namespace TakEngine
                             }
                             else
                             {
-                                game.Board[i, space].Add(Piece.MakePieceID(Piece.Stone_Flat, owner));
+                                game.Board[space, i].Add(Piece.MakePieceID(Piece.Stone_Flat, owner));
                                 game.StonesRemaining[owner]--;
                             }
                         }

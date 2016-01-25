@@ -1,5 +1,6 @@
 ﻿using System.ServiceModel;
 using System.ServiceModel.Web;
+using System.Web.Cors;
 
 namespace TakService
 {
@@ -11,7 +12,11 @@ namespace TakService
 
         [OperationContract]
         [WebGet]
-        string GetMove(string ptn, int aiLevel = 3, int flatScore = 9000, bool tps = false);
+        string GetMove(string ptn = null, string code = null, int aiLevel = 3, int flatScore = 9000, bool tps = false);
+
+        [OperationContract]
+        [WebGet]
+        string[][] GetAllMoves(string code, int aiLevel = 3, int flatScore = 9000, bool tps = false);
 
   //      [OperationContract]
    //     CompositeType GetDataUsingDataContract(CompositeType composite);

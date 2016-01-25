@@ -9,22 +9,23 @@ namespace TakService
     [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
     public class TakMoveService : ITakMoveService
     {
-        
-        public string GetMove(string ptn, int aiLevel = 3, int flatScore = 9000, bool tps = false)
-        {
-            try {
-                GameState _game;
-                if (tps)
-                {
-                    _game = GameState.LoadFromTPS(ptn);
 
-                }
-                else //turn-by-turn ptn
-                {
-                    _game = GameState.LoadFromPTN(ptn);
-                }
-                TakAI _ai = new TakAI(_game.Size, flatScore);
-                _ai.MaxDepth = aiLevel;
+        GameState _game;
+        TakAI _ai;
+
+        public string GetMove(string ptn = null, string code = null, int aiLevel = 3, int flatScore = 9000, bool tps = false)
+        {
+            string input;
+            if(ptn == null)
+            {
+                if(code == null) { return "must set code or ptn"; };
+                input = code;
+            }
+            else if(code == null) { input = ptn; }
+            else { return "can't set both code and ptn"; };
+
+            try {
+                InitGame(input, aiLevel, flatScore, tps);
                 var next_move = _ai.FindGoodMove(_game);
                 return next_move.Notate();
             }
@@ -33,6 +34,38 @@ namespace TakService
                 return ex.Message;
             }
         }
+
+        public string[][] GetAllMoves(string code, int aiLevel = 3, int flatScore = 9000, bool tps = false)
+        {
+            try
+            {
+                InitGame(code, aiLevel, flatScore, tps);
+                return _ai.ReportAllMoves(_game).ToStringArray();
+            }
+            catch (Exception ex)
+            {
+                string[][] ret = new string[1][];
+                ret[0] = new string[1];
+                ret[0][0] = ex.Message;
+                return ret;
+            }
+        }
+
+        void InitGame(string code, int aiLevel, int flatScore, bool tps)
+        {
+            if (tps)
+            {
+                _game = GameState.LoadFromTPS(code);
+
+            }
+            else //turn-by-turn ptn
+            {
+                _game = GameState.LoadFromPTN(code);
+            }
+            _ai = new TakAI(_game.Size, flatScore);
+            _ai.MaxDepth = aiLevel;
+        }
+
 
         /*public CompositeType GetDataUsingDataContract(CompositeType composite)
         {
