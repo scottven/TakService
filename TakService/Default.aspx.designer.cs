@@ -58,6 +58,15 @@ namespace TakService {
         protected global::System.Web.UI.WebControls.Button go;
         
         /// <summary>
+        /// all control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button all;
+        
+        /// <summary>
         /// aiLevel control.
         /// </summary>
         /// <remarks>
@@ -83,5 +92,14 @@ namespace TakService {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox move;
+        
+        /// <summary>
+        /// all_moves control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView all_moves;
     }
 }

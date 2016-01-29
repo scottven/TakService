@@ -11,17 +11,18 @@
         <div>
             <table>
                 <tr>
-                    <td>Paste code here:<br />
+                    <td valign="top">Paste code here:<br />
                         <asp:RadioButton ID="tps_false" GroupName="code_type" runat="server" Text="PTN" checked="true" />
                         <asp:RadioButton ID="tps_true" groupname="code_type" runat="server" Text="TPS" /><br />
                         <asp:TextBox ID="ptn" runat="server" Rows="30" TextMode="MultiLine"></asp:TextBox><br />
-                        <asp:Button ID="go" runat="server" Text="Go!" OnClick="go_Click" />
+                        <asp:Button ID="go" runat="server" Text="Go!" OnClick="go_Click" /> <asp:Button ID="all" runat="server" Text="Get All Moves" OnClick="all_Click"/>
                     </td>
                     <td valign="top">
                         <br /><br />
                         AI level: <asp:TextBox ID="aiLevel" runat="server" MaxLength="1" Type="number">3</asp:TextBox><br />
                         Flat Score: <asp:TextBox ID="flatScore" runat="server" MaxLength="1" Type="number">9000</asp:TextBox><br />
-                        <b>The next move is: <asp:TextBox ID="move" runat="server"></asp:TextBox></b>
+                        <b>The next move is: <asp:TextBox ID="move" runat="server"></asp:TextBox></b><br />
+                        <asp:GridView ID="all_moves" runat="server" AutoGenerateColumns="true"></asp:GridView>
                     </td>
                 </tr>
             </table>
