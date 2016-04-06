@@ -14,6 +14,7 @@ namespace TakService
         {
             TakMoveService service = new TakMoveService();
             all_moves.DataSource = null;
+            all_moves.DataBind();
             move.Text = service.GetMove(ptn.Text, null, Int32.Parse(aiLevel.Text), Int32.Parse(flatScore.Text), tps_true.Checked);
         }
 
