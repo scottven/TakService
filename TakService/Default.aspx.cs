@@ -13,6 +13,7 @@ namespace TakService
         protected void go_Click(object sender, EventArgs e)
         {
             TakMoveService service = new TakMoveService();
+            all_moves.DataSource = null;
             move.Text = service.GetMove(ptn.Text, null, Int32.Parse(aiLevel.Text), Int32.Parse(flatScore.Text), tps_true.Checked);
         }
 
