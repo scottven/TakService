@@ -53,6 +53,11 @@ namespace TakService
 
         void InitGame(string code, int aiLevel, int flatScore, bool tps)
         {
+            if (code == null) { throw new Exception("must supply code"); };
+            // deal with odd IIS behavior
+            if (aiLevel == 0) { aiLevel = 3; };
+            if (flatScore == 0) { flatScore = 9000; };
+
             if (tps)
             {
                 _game = GameState.LoadFromTPS(code);
