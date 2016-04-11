@@ -28,7 +28,7 @@ namespace TakEngine.Notation
                 string s;
                 if (!Tags.TryGetValue(StandardTags.Size, out s))
                     throw new ApplicationException("Game size undefined");
-                for (int size = 4; size <= 8; size++)
+                for (int size = 3; size <= 8; size++)
                 {
                     string shortVersion = size.ToString();
                     string longVersion = shortVersion + "x" + shortVersion;
