@@ -45,11 +45,8 @@ namespace TakEngine.Notation
         {
             var notationText = context.SYMBOL().GetText();
             MoveNotation notation;
-            try {
-                MoveNotation.TryParse(notationText, out notation);
-            } catch (Exception ex) {
-                throw new ApplicationException("Unrecognized move notation: " + notationText + "\n" + ex.Message);
-            }
+            if (!MoveNotation.TryParse(notationText, out notation))
+                throw new ApplicationException("Unrecognized move notation: " + notationText);
             _currentGame.MoveNotations.Add(notation);
             base.ExitSan_move(context);
         }

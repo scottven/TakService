@@ -50,16 +50,12 @@ namespace TakEngine
         {
             switch (Size)
             {
-                case 3:
-                    StonesRemaining[0] = StonesRemaining[1] = 10;
-                    CapRemaining[0] = CapRemaining[1] = 0;
-                    break;
                 case 4:
                     StonesRemaining[0] = StonesRemaining[1] = 15;
                     CapRemaining[0] = CapRemaining[1] = 0;
                     break;
                 case 5:
-                    StonesRemaining[0] = StonesRemaining[1] = 21;
+                    StonesRemaining[0] = StonesRemaining[1] = 20;
                     CapRemaining[0] = CapRemaining[1] = 1;
                     break;
                 case 6:
@@ -91,113 +87,6 @@ namespace TakEngine
             for (int i = 0; i < size; i++)
                 for (int j = 0; j < size; j++)
                     game.Board[i, j] = new List<int>(size);
-            return game;
-        }
-
-        public static GameState LoadFromPTN(string ptn)
-        {
-            var database = TakEngine.Notation.TakPGN.LoadFromString(ptn);
-            TakEngine.Notation.GameRecord _gameRecord = new TakEngine.Notation.GameRecord();
-            _gameRecord = database.Games[0];
-            var game = GameState.NewGame(_gameRecord.BoardSize);
-            BoardPosition[] normalPositions = new BoardPosition[game.Size * game.Size];
-            for (int i = 0; i < normalPositions.Length; i++)
-                normalPositions[i] = new BoardPosition(i % game.Size, i / game.Size);
-
-            foreach (var notation in _gameRecord.MoveNotations)
-            {
-                List<IMove> _tempMoveList = new List<IMove>();
-                TakAI.EnumerateMoves(_tempMoveList, game, normalPositions);
-                var move = notation.MatchLegalMove(_tempMoveList);
-                if (null == move)
-                    throw new ApplicationException("Illegal move: " + notation.Text);
-                move.MakeMove(game);
-                game.Ply++;
-            }
-            return game;
-        }
-
-        public static GameState LoadFromTPS(string tps)
-        {
-            if (tps[0] != '[')
-                throw new ApplicationException("tps doesn't start with [");
-            int start = 1;
-            if (tps[1] == ' ')
-                start = 2;
-            int end = tps.Substring(start).IndexOf(' ');
-            string[] reversed_rows = tps.Substring(start, end).Split('/');
-            string[] rows = new string[reversed_rows.Length];
-            for(int i = 0; i < reversed_rows.Length; i++)
-            {
-                rows[reversed_rows.Length - i - 1] = reversed_rows[i];
-            }
-            start += end + 1;
-            end = tps.Substring(start).IndexOf(' ');
-            int current_player = int.Parse(tps.Substring(start, end));
-            int current_turn = int.Parse(tps.Substring(start + end + 1, 1));
-            if (current_player != 1 && current_player != 2)
-                throw new ApplicationException("player should be 1 or 2");
-            if (tps.Substring(start + end + 2).IndexOf(']') < 0)
-                throw new ApplicationException("tps doesn't end with ]");
-
-            var game = GameState.NewGame(rows.Length);
-            game.Ply = (current_turn - 1) * 2 + (current_player - 1); //silly TPS counts up from 1
-            for(int i = 0; i < game.Size; i++)
-            {
-                string[] spaces = rows[i].Split(',');
-                int space = 0;
-                for(int j = 0; j < spaces.Length; j++)
-                {
-                    if (spaces[j][0] == 'x')
-                    {
-                        int reps = 1;
-                        if (spaces[j].Length == 2)
-                        {
-                            reps = int.Parse(spaces[j][1].ToString());
-                            if (reps < 2 || reps > game.Size)
-                                throw new ApplicationException("repetition out of range: " + spaces[j]);
-                        }
-                        else if (spaces[j].Length != 1)
-                            throw new ApplicationException("incorrect empty space notation: " + spaces[j]);
-                        space += reps;
-                    }
-                    else
-                    {
-                        int stack_height = spaces[j].Length;
-                        int top = Piece.Stone_Flat;
-                        if (spaces[j][stack_height - 1] == 'S' || spaces[j][stack_height - 1] == 'C')
-                        {
-                            stack_height--;
-                            top = spaces[j][stack_height] == 'S' ? Piece.Stone_Standing : Piece.Stone_Cap;
-                        }
-                        for (int k = 0; k < stack_height; k++)
-                        {
-                            int owner = spaces[j][k] == '1' ? 0 : 1;
-                            if (owner == 1 && spaces[j][k] != '2')
-                                throw new ApplicationException("stones in a stack must be owned by player 1 or player 2: " + spaces[j]);
-
-                            if (k == stack_height - 1)
-                            {
-                                game.Board[space, i].Add(Piece.MakePieceID(top, owner));
-                                if(top == Piece.Stone_Cap)
-                                {
-                                    game.CapRemaining[owner]--;
-                                }
-                                else
-                                {
-                                    game.StonesRemaining[owner]--;
-                                }
-                            }
-                            else
-                            {
-                                game.Board[space, i].Add(Piece.MakePieceID(Piece.Stone_Flat, owner));
-                                game.StonesRemaining[owner]--;
-                            }
-                        }
-                        space++;
-                    }
-                }
-            }
             return game;
         }
 
