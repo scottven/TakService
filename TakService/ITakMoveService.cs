@@ -1,6 +1,5 @@
 ﻿using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Web.Cors;
 
 namespace TakService
 {
