@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TakEngine
 {
-    public class TakAI : ITakAI
+    public class TakAI2 : ITakAI
     {
         /// <summary>
         /// Default value for the maximum game tree search depth
@@ -46,7 +46,7 @@ namespace TakEngine
         public BoardPosition[] NormalPositions { get { return _normalPositions; } }
         public int LastEvaluation { get; private set; }
         public string EvalMethod { get { return "InfEval"; } }
-        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth)
+        public TakAI2(int boardSize, int maxDepth = DefaultMaxDepth)
         {
             _maxDepth = maxDepth;
             _rand = new Random();
@@ -488,24 +488,10 @@ namespace TakEngine
                     }
                 }
 
-                
-
                 int score = _roadScores[0] - _roadScores[1];
                 if (score != 0)
                 {
                     eval = score;
-                    gameOver = true;
-                    return;
-                }
-                else if (_roadScores[0] > 0 && (game.Ply & 1) == 1)
-                {
-                    eval = _roadScores[0];
-                    gameOver = true;
-                    return;
-                }
-                else if (_roadScores[1] > 0 && (game.Ply & 1) == 0)
-                {
-                    eval = -_roadScores[1];
                     gameOver = true;
                     return;
                 }

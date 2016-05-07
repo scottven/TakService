@@ -54,8 +54,9 @@ namespace TakEngine
                     while (i + unstackCount < Moves.Count &&
                         ((PlacePieceMove)Moves[i]).Pos == ((PlacePieceMove)Moves[i + unstackCount]).Pos)
                         unstackCount++;
+                    if (i > 1 || i + unstackCount < Moves.Count)
+                        sb.Append(unstackCount);
                     i += unstackCount;
-                    sb.Append(unstackCount);
                 }
             }
             return sb.ToString();

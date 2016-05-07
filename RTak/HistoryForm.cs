@@ -41,7 +41,8 @@ namespace TakGame_WinForms
             if (e.Cell.ColumnIndex == 0 || e.Cell.Value == null)
             {
                 e.Cell.Selected = false;
-                grid.Rows[selectedCellRow].Cells[selectedCellColumn].Selected = true;
+                if (selectedCellColumn > 0)
+                    grid.Rows[selectedCellRow].Cells[selectedCellColumn].Selected = true;
             }
             else
             {
@@ -85,6 +86,12 @@ namespace TakGame_WinForms
         }
 
         public event EventHandler SelectedPlyChanged = delegate { };
+        public void Clear()
+        {
+            selectedCellColumn = 0;
+            selectedCellRow = 0;
+            _turnData.Clear();
+        }
 
         public void AddPly(string notation)
         {

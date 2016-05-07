@@ -55,7 +55,7 @@ namespace TakEngine
                     CapRemaining[0] = CapRemaining[1] = 0;
                     break;
                 case 5:
-                    StonesRemaining[0] = StonesRemaining[1] = 20;
+                    StonesRemaining[0] = StonesRemaining[1] = 21;
                     CapRemaining[0] = CapRemaining[1] = 1;
                     break;
                 case 6:

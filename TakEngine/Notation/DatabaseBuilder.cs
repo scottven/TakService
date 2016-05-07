@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TakEngine.Notation
 {
+    /// <summary>
+    /// Builds a DatabaseRecord (and the data contained therein) as a PTN file is parsed
+    /// </summary>
     class DatabaseBuilder : Generated.TakPGNBaseListener
     {
         public DatabaseRecord Database = new DatabaseRecord();

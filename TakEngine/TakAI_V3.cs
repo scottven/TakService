@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TakEngine
 {
-    public class TakAI : ITakAI
+    public class TakAI_V3 : ITakAI
     {
         /// <summary>
         /// Default value for the maximum game tree search depth
@@ -45,8 +45,8 @@ namespace TakEngine
         public BoardPosition[] RandomPositions { get { return _randomPositions; } }
         public BoardPosition[] NormalPositions { get { return _normalPositions; } }
         public int LastEvaluation { get; private set; }
-        public string EvalMethod { get { return "InfEval"; } }
-        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth)
+        public string EvalMethod { get { return "V3"; } }
+        public TakAI_V3(int boardSize, int maxDepth = DefaultMaxDepth)
         {
             _maxDepth = maxDepth;
             _rand = new Random();
@@ -398,31 +398,33 @@ namespace TakEngine
             int _fillingid = 0;
             int _fillContextPlayer;
             GameState _fillContextState;
-            HashSet<int> _lookup = new HashSet<int>();
             int[] _roadScores = new int[2];
             int _boardSize;
-            List<BoardPosition> _edgePositions;
-            int[,] _inf;
+            List<BoardPosition> _allPositions;
+            int[] _inf1;
+            int[] _inf2;
+            bool[] _infqd;
+            Queue<int> _infq;
 
             public Evaluator(int boardSize)
             {
                 _ids = new int[boardSize, boardSize];
-                _inf = new int[boardSize, boardSize];
+                _inf1 = new int[boardSize * boardSize];
+                _inf2 = new int[boardSize * boardSize];
+                _infqd = new bool[boardSize * boardSize];
+                _infq = new Queue<int>(boardSize * 4);
                 _boardSize = boardSize;
 
                 // Precalculate list of edge positions to reduce logic that must be executed in every evaluation
-                _edgePositions = new List<BoardPosition>();
+                _allPositions = new List<BoardPosition>();
                 for (int i = 0; i < _boardSize; i++)
                 {
-                    _edgePositions.Add(new BoardPosition(i, 0));
-                    _edgePositions.Add(new BoardPosition(i, _boardSize - 1));
-                    if (i > 0 && i < _boardSize - 1)
-                    {
-                        _edgePositions.Add(new BoardPosition(0, i));
-                        _edgePositions.Add(new BoardPosition(_boardSize - 1, i));
-                    }
+                    for (int j = 0; j < _boardSize; j++)
+                        _allPositions.Add(new BoardPosition(i, j));
                 }
             }
+
+            BoardPosition _fillmin, _fillmax;
 
             /// <summary>
             /// Evaluate the current board position
@@ -440,55 +442,33 @@ namespace TakEngine
                     for (int j = 0; j < game.Size; j++)
                     {
                         _ids[i, j] = 0;
-                        _inf[i, j] = 0;
+                        var offset = i * _boardSize + j;
+                        _inf1[offset] = 0;
+                        _inf2[offset] = 0;
+                        _infqd[offset] = false;
                     }
+                _infq.Clear();
 
                 // Ensure every flat stone / cap stone on the edges has been assigned an island ID number
-                foreach (var pos in _edgePositions)
+                _roadScores[0] = _roadScores[1] = 0;
+                eval = 0;
+                foreach (var pos in _allPositions)
                 {
                     var piece = game[pos.X, pos.Y];
                     if (piece.HasValue && _ids[pos.X, pos.Y] == 0 && Piece.GetStone(piece.Value) != Piece.Stone_Standing)
                     {
                         _fillingid++;
                         _fillContextPlayer = Piece.GetPlayerID(piece.Value);
+
+                        _fillmax = _fillmin = pos;
                         _flood.Fill(pos.X, pos.Y, doesMatch, paint);
+
+                        if ((_fillmin.X == 0 && _fillmax.X == _boardSize - 1) ||
+                            (_fillmin.Y == 0 && _fillmax.Y == _boardSize - 1))
+                            _roadScores[_fillContextPlayer] = 9999 - Math.Min(500, game.Ply);
+                        eval += ((Math.Abs(_fillmax.X - _fillmin.X) + Math.Abs(_fillmax.Y - _fillmin.Y)) * (_fillContextPlayer * -2 + 1)) * 3;
                     }
                 }
-
-                // look for north-south road
-                _lookup.Clear();
-                _roadScores[0] = _roadScores[1] = 0;
-                for (int x = 0; x < game.Size; x++)
-                {
-                    if (_ids[x, 0] > 0)
-                        _lookup.Add(_ids[x, 0]);
-                }
-                for (int x = 0; x < game.Size; x++)
-                {
-                    if (_lookup.Contains(_ids[x, game.Size - 1]))
-                    {
-                        var player = Piece.GetPlayerID(game[x, game.Size - 1].Value);
-                        _roadScores[player] = 9999 - Math.Min(500, game.Ply);
-                    }
-                }
-
-                // look for east-west road
-                _lookup.Clear();
-                for (int y = 0; y < game.Size; y++)
-                {
-                    if (_ids[0, y] > 0)
-                        _lookup.Add(_ids[0, y]);
-                }
-                for (int y = 0; y < game.Size; y++)
-                {
-                    if (_lookup.Contains(_ids[game.Size - 1, y]))
-                    {
-                        var player = Piece.GetPlayerID(game[game.Size - 1, y].Value);
-                        _roadScores[player] = 9999 - Math.Min(500, game.Ply);
-                    }
-                }
-
-                
 
                 int score = _roadScores[0] - _roadScores[1];
                 if (score != 0)
@@ -509,12 +489,12 @@ namespace TakEngine
                     gameOver = true;
                     return;
                 }
-                eval = 0;
                 bool foundEmpty = false;
                 for (int y = 0; y < game.Size; y++)
                     for (int x = 0; x < game.Size; x++)
                     {
                         var stack = game.Board[x, y];
+                        var offset = y * _boardSize + x;
                         for (int j = 0; j < stack.Count; j++)
                         {
                             var piece = stack[j];
@@ -529,15 +509,31 @@ namespace TakEngine
                                 score += pts;
                                 pts *= 10;
 
-                                int infadd = 1 - player * 2;
-                                if (x > 0)
-                                    _inf[x - 1, y] += infadd;
-                                if (y > 0)
-                                    _inf[x, y - 1] += infadd;
-                                if (x < game.Size - 1)
-                                    _inf[x + 1, y] += infadd;
-                                if (y < game.Size - 1)
-                                    _inf[x, y + 1] += infadd;
+                                _inf1[offset] = 1 << player;
+                                var up = offset - _boardSize;
+                                var right = offset + 1;
+                                var left = offset - 1;
+                                var down = offset + _boardSize;
+                                if (x > 0 && game.Board[x - 1, y].Count == 0 && !_infqd[left])
+                                {
+                                    _infqd[left] = true;
+                                    _infq.Enqueue(left);
+                                }
+                                if (y > 0 && game.Board[x, y - 1].Count == 0 && !_infqd[up])
+                                {
+                                    _infqd[up] = true;
+                                    _infq.Enqueue(up);
+                                }
+                                if (x < _boardSize - 1 && game.Board[x + 1, y].Count == 0 && !_infqd[right])
+                                {
+                                    _infqd[right] = true;
+                                    _infq.Enqueue(right);
+                                }
+                                if (y < _boardSize - 1 && game.Board[x, y + 1].Count == 0 && !_infqd[down])
+                                {
+                                    _infqd[down] = true;
+                                    _infq.Enqueue(down);
+                                }
                             }
                             else if (player == Piece.GetPlayerID(stack[stack.Count - 1]))
                                 pts *= 2;
@@ -547,13 +543,59 @@ namespace TakEngine
                             foundEmpty = true;
                     }
 
-                for (int y = 0; y < game.Size; y++)
-                    for (int x = 0; x < game.Size; x++)
+                if (_infq.Count > 0)
+                    Array.Copy(_inf1, _inf2, _inf1.Length);
+                while (_infq.Count > 0)
+                {
+                    var offset = _infq.Dequeue();
+                    var x = offset / _boardSize;
+                    var y = offset / _boardSize;
+                    var up = offset - _boardSize;
+                    var right = offset + 1;
+                    var left = offset - 1;
+                    var down = offset + _boardSize;
+                    int flag = 0;
+                    if (x > 0)
+                        flag |= _inf1[left];
+                    if (y > 0)
+                        flag |= _inf1[up];
+                    if (x < _boardSize - 1)
+                        flag |= _inf1[right];
+                    if (y > _boardSize - 1)
+                        flag |= _inf1[down];
+
+                    if (1 == ((flag & 1) ^ (flag >> 1)))
                     {
-                        var stack = game.Board[x, y];
-                        if (stack.Count == 0)
-                            eval += _inf[x, y];
+                        _inf2[offset] = flag;
+                        if (x > 0 && _inf1[left] == 0 && !_infqd[left])
+                        {
+                            _infqd[left] = true;
+                            _infq.Enqueue(left);
+                        }
+                        if (y > 0 && _inf1[left] == 0 && !_infqd[left])
+                        {
+                            _infqd[left] = true;
+                            _infq.Enqueue(left);
+                        }
+                        if (x < _boardSize - 1 && _inf1[right] == 0 && !_infqd[right])
+                        {
+                            _infqd[right] = true;
+                            _infq.Enqueue(right);
+                        }
+                        if (y < _boardSize - 1 && _inf1[down] == 0 && !_infqd[down])
+                        {
+                            _infqd[down] = true;
+                            _infq.Enqueue(down);
+                        }
                     }
+                    Array.Copy(_inf2, _inf1, _inf1.Length);
+                }
+
+                for (int i = 0; i < _boardSize * _boardSize; i++)
+                {
+                    var n = _inf1[i];
+                    eval += 2 * ((n & 1) + ((n >> 1) & 1) * -1);
+                }
 
                 if (!foundEmpty ||
                     (game.StonesRemaining[0] + game.CapRemaining[0]) == 0 ||
@@ -588,6 +630,10 @@ namespace TakEngine
             void paint(int x, int y)
             {
                 _ids[x, y] = _fillingid;
+                _fillmin.X = Math.Min(x, _fillmin.X);
+                _fillmin.Y = Math.Min(y, _fillmin.Y);
+                _fillmax.X = Math.Max(x, _fillmax.X);
+                _fillmax.Y = Math.Max(y, _fillmax.Y);
             }
         }
     }

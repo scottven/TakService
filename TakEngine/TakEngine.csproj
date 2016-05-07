@@ -49,6 +49,7 @@
     <Compile Include="FloodFill.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="IMove.cs" />
+    <Compile Include="ITakAI.cs" />
     <Compile Include="Lists.cs" />
     <Compile Include="Notation\DatabaseBuilder.cs" />
     <Compile Include="Notation\DatabaseRecord.cs" />
@@ -64,11 +65,23 @@
     <Compile Include="Piece.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PlacePieceMove.cs" />
-    <Compile Include="TakAI.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="TakAI_V3.cs" />
+    <Compile Include="TakAI_V1.cs" />
+    <Compile Include="TakAI_V2.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="changes.txt" />
+    <None Include="app.config" />
     <None Include="lib\Antlr4.Runtime.dll" />
+    <None Include="Properties\Settings.settings">
+      <Generator>PublicSettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Notation\TakPGN.g4" />

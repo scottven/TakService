@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TakEngine
 {
-    public class TakAI : ITakAI
+    public class TakAI_V2 : ITakAI
     {
         /// <summary>
         /// Default value for the maximum game tree search depth
@@ -45,8 +45,8 @@ namespace TakEngine
         public BoardPosition[] RandomPositions { get { return _randomPositions; } }
         public BoardPosition[] NormalPositions { get { return _normalPositions; } }
         public int LastEvaluation { get; private set; }
-        public string EvalMethod { get { return "InfEval"; } }
-        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth)
+        public string EvalMethod { get { return "V2"; } }
+        public TakAI_V2(int boardSize, int maxDepth = DefaultMaxDepth)
         {
             _maxDepth = maxDepth;
             _rand = new Random();

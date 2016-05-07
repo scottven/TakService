@@ -16,7 +16,7 @@ namespace TakEngine
         public static BoardPosition Offset(BoardPosition pos, int dir)
         {
 #if DEBUG
-            if (dir < 0 || dir > 4)
+            if (dir < 0 || dir >= 4)
                 throw new ArgumentException("Invalid direction");
 #endif
             return new BoardPosition(pos.X + DirX[dir], pos.Y + DirY[dir]);

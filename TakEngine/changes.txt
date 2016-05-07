@@ -1,5 +1,19 @@
 ﻿Most recent version at top
 
+Version 1.1.6
+=============
+FIXED: Evaluator did not handle dual-road scenarios correctly
+
+Version 1.1.5
+=============
+CHANGED: 5x5 game players receive 21 stones (changed from 20) to match Tak rules revision
+CHANGED: Tak AI evaluation function changed slightly to reward influence on non-occupied stones.
+         Initial results indicate that this version of the AI is a bit stronger.
+
+Version 1.1.4
+=============
+CHANGED: Notation unstack count is now optional if the entire stack is unstacked in one spot
+
 Version 1.1.2
 ==============
 NEW: Added support for parsing notation

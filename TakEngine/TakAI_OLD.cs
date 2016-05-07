@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TakEngine
 {
-    public class TakAI : ITakAI
+    public class TakAI_OLD : ITakAI
     {
         /// <summary>
         /// Default value for the maximum game tree search depth
@@ -45,8 +45,8 @@ namespace TakEngine
         public BoardPosition[] RandomPositions { get { return _randomPositions; } }
         public BoardPosition[] NormalPositions { get { return _normalPositions; } }
         public int LastEvaluation { get; private set; }
-        public string EvalMethod { get { return "InfEval"; } }
-        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth)
+        public string EvalMethod { get { return "SimpleEval"; } }
+        public TakAI_OLD(int boardSize, int maxDepth = DefaultMaxDepth)
         {
             _maxDepth = maxDepth;
             _rand = new Random();
@@ -132,7 +132,7 @@ namespace TakEngine
 
             var game = data.Game;
             EnumerateMoves(moves, game, _randomPositions);
-
+            
             foreach (var move in moves)
             {
                 move.MakeMove(game);
@@ -351,7 +351,7 @@ namespace TakEngine
             if (!state.IsPositionLegal(targetPos))
                 return;
             var stack = state.Board[targetPos.X, targetPos.Y];
-
+            
             var stacktop = state[targetPos];
             bool flatten = false;
             if (stacktop.HasValue)
@@ -402,12 +402,10 @@ namespace TakEngine
             int[] _roadScores = new int[2];
             int _boardSize;
             List<BoardPosition> _edgePositions;
-            int[,] _inf;
 
             public Evaluator(int boardSize)
             {
                 _ids = new int[boardSize, boardSize];
-                _inf = new int[boardSize, boardSize];
                 _boardSize = boardSize;
 
                 // Precalculate list of edge positions to reduce logic that must be executed in every evaluation
@@ -438,10 +436,7 @@ namespace TakEngine
                 // reset island id numbers
                 for (int i = 0; i < game.Size; i++)
                     for (int j = 0; j < game.Size; j++)
-                    {
                         _ids[i, j] = 0;
-                        _inf[i, j] = 0;
-                    }
 
                 // Ensure every flat stone / cap stone on the edges has been assigned an island ID number
                 foreach (var pos in _edgePositions)
@@ -467,7 +462,7 @@ namespace TakEngine
                 {
                     if (_lookup.Contains(_ids[x, game.Size - 1]))
                     {
-                        var player = Piece.GetPlayerID(game[x, game.Size - 1].Value);
+                        var player = Piece.GetPlayerID(game[x,game.Size - 1].Value);
                         _roadScores[player] = 9999 - Math.Min(500, game.Ply);
                     }
                 }
@@ -488,24 +483,10 @@ namespace TakEngine
                     }
                 }
 
-                
-
                 int score = _roadScores[0] - _roadScores[1];
                 if (score != 0)
                 {
                     eval = score;
-                    gameOver = true;
-                    return;
-                }
-                else if (_roadScores[0] > 0 && (game.Ply & 1) == 1)
-                {
-                    eval = _roadScores[0];
-                    gameOver = true;
-                    return;
-                }
-                else if (_roadScores[1] > 0 && (game.Ply & 1) == 0)
-                {
-                    eval = -_roadScores[1];
                     gameOver = true;
                     return;
                 }
@@ -520,7 +501,7 @@ namespace TakEngine
                             var piece = stack[j];
                             int pts = 0;
                             if (Piece.GetStone(piece) == Piece.Stone_Flat)
-                                pts = 2;
+                                pts = 1;
                             var player = Piece.GetPlayerID(piece);
                             if (player != 0)
                                 pts *= -1;
@@ -528,16 +509,6 @@ namespace TakEngine
                             {
                                 score += pts;
                                 pts *= 10;
-
-                                int infadd = 1 - player * 2;
-                                if (x > 0)
-                                    _inf[x - 1, y] += infadd;
-                                if (y > 0)
-                                    _inf[x, y - 1] += infadd;
-                                if (x < game.Size - 1)
-                                    _inf[x + 1, y] += infadd;
-                                if (y < game.Size - 1)
-                                    _inf[x, y + 1] += infadd;
                             }
                             else if (player == Piece.GetPlayerID(stack[stack.Count - 1]))
                                 pts *= 2;
@@ -547,16 +518,8 @@ namespace TakEngine
                             foundEmpty = true;
                     }
 
-                for (int y = 0; y < game.Size; y++)
-                    for (int x = 0; x < game.Size; x++)
-                    {
-                        var stack = game.Board[x, y];
-                        if (stack.Count == 0)
-                            eval += _inf[x, y];
-                    }
-
-                if (!foundEmpty ||
-                    (game.StonesRemaining[0] + game.CapRemaining[0]) == 0 ||
+                if (!foundEmpty || 
+                    (game.StonesRemaining[0] + game.CapRemaining[0]) == 0 || 
                     (game.StonesRemaining[1] + game.CapRemaining[1]) == 0)
                 {
                     gameOver = true;

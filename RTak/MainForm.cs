@@ -18,8 +18,8 @@ namespace TakGame_WinForms
         const int DefaultGameSize = 5;
         BoardView _boardView;
         GameState _game;
-        TakAI.Evaluator _evaluator;
-        TakAI _ai;
+        TakAI_V3.Evaluator _evaluator;
+        ITakAI _ai;
         List<PieceToolInfo> _tools = new List<PieceToolInfo>();
         int?[] _aiLevels = new int?[] { null, null };
         System.Threading.ManualResetEvent _notThinking = new System.Threading.ManualResetEvent(true);
@@ -55,6 +55,9 @@ namespace TakGame_WinForms
             _boardView.MouseOverSpotChanged += boardView_MouseOverSpotChanged;
             InitButtonImages();
             NewGame(DefaultGameSize);
+
+            if (System.Environment.GetCommandLineArgs().Contains("debug"))
+                TakEngine.Properties.Settings.Default.debug = true;
         }
 
         IBoardInteraction _interaction;
@@ -70,9 +73,13 @@ namespace TakGame_WinForms
             _fileName = null;
             _gameRecord.Tags.Clear();
             _gameRecord.MoveNotations.Clear();
+            _navigating = true;
+            if (_historyForm != null)
+                _historyForm.Clear();
+            _navigating = false;
             _game = GameState.NewGame(size);
-            _ai = new TakAI(_game.Size);
-            _evaluator = new TakAI.Evaluator(_game.Size);
+            _ai = new TakAI_V3(_game.Size);
+            _evaluator = new TakAI_V3.Evaluator(_game.Size);
             _boardView.Game = _game;
             PrepareTurn();
         }
@@ -203,7 +210,7 @@ namespace TakGame_WinForms
             {
                 lblStatus.Text = string.Format("Player {0}'s move (turn {1})",
                     1 + (_game.Ply & 1),
-                    _game.Ply + 1);
+                    DescribeTurn(_game.Ply));
                 tablePanel.Enabled = true;
                 miMoveEnter.Enabled = true;
             }
@@ -220,7 +227,7 @@ namespace TakGame_WinForms
             else
             {
                 string condition = "F";
-                if (Math.Abs(eval) > TakAI.Evaluator.FlatWinEval)
+                if (Math.Abs(eval) > TakAI_V3.Evaluator.FlatWinEval)
                     condition = "R";
                 if (eval > 0)
                     _gameRecord.Result = _gameRecord.ResultCode = string.Format("{0}-0", condition);
@@ -235,26 +242,41 @@ namespace TakGame_WinForms
                 _interaction.AcceptPreview();
             if (_interaction.Completed)
             {
-                var move = _interaction.GetMove();
-                AddMoveToGameRecord(move);
-                _game.Ply++;
+                ProcessMove(move: _interaction.GetMove(), alreadyExecuted: true);
                 PrepareTurn();
             }
             _boardView.InvalidateMouseOverSpot();
             boardView_MouseOverSpotChanged(this, EventArgs.Empty);
         }
 
-        void AddMoveToGameRecord(IMove move)
+        void ProcessMove(IMove move = null, TakEngine.Notation.MoveNotation notation = null, bool alreadyExecuted = false)
         {
-            TakEngine.Notation.MoveNotation notated;
-            if (!TakEngine.Notation.MoveNotation.TryParse(move.Notate(), out notated))
-                throw new ApplicationException("Critical movement error"); // this shouldn't ever happen
-            _gameRecord.MoveNotations.Add(notated);
+            if (move == null && notation == null)
+                throw new ArgumentException("move and notation cannot both be null");
+            if (notation == null)
+            {
+                if (!TakEngine.Notation.MoveNotation.TryParse(move.Notate(), out notation))
+                    throw new ApplicationException("Critical move error");
+            }
+            else if (move == null)
+            {
+                _tempMoveList.Clear();
+                TakAI_V3.EnumerateMoves(_tempMoveList, _game, _ai.NormalPositions);
+                move = notation.MatchLegalMove(_tempMoveList);
+                if (move == null)
+                    throw new ApplicationException("Illegal move: " + notation.Text);
+            }
+            if (!alreadyExecuted)
+                move.MakeMove(_game);
+            if (!_gameRecord.MoveNotations.Contains(notation)) // if opening an existing game file then we may have already loaded the notation
+                _gameRecord.MoveNotations.Add(notation);
             _navigating = true;
             if (_historyForm != null)
-                _historyForm.AddPly(notated.Text);
+                _historyForm.AddPly(notation.Text);
             _navigating = false;
-            _movesOfNotation[notated] = move;
+            _movesOfNotation[notation] = move;
+            _game.Ply++;
+            _boardView.InvalidateRender();
         }
 
         private void boardView_MouseClick(object sender, MouseEventArgs e)
@@ -445,12 +467,7 @@ namespace TakGame_WinForms
                 _aiLevelUpdating = false;
             }
             else
-            {
-                move.MakeMove(_game);
-                AddMoveToGameRecord(move);
-                _boardView.InvalidateRender();
-                _game.Ply++;
-            }
+                ProcessMove(move: move);
             PrepareTurn();
         }
 
@@ -485,25 +502,12 @@ namespace TakGame_WinForms
                     throw new ApplicationException("File must contain exactly 1 game");
                 _gameRecord = database.Games[0];
                 _game = GameState.NewGame(_gameRecord.BoardSize);
-                _ai = new TakAI(_game.Size);
-                _evaluator = new TakAI.Evaluator(_game.Size);
+                _ai = new TakAI_V3(_game.Size);
+                _evaluator = new TakAI_V3.Evaluator(_game.Size);
                 _boardView.Game = _game;
 
                 foreach (var notation in _gameRecord.MoveNotations)
-                {
-                    _tempMoveList.Clear();
-                    TakAI.EnumerateMoves(_tempMoveList, _game, _ai.NormalPositions);
-                    var move = notation.MatchLegalMove(_tempMoveList);
-                    if (null == move)
-                        throw new ApplicationException("Illegal move: " + notation.Text);
-                    move.MakeMove(_game);
-                    _movesOfNotation[notation] = move;
-                    _navigating = true;
-                    if (_historyForm != null)
-                        _historyForm.AddPly(notation.Text);
-                    _navigating = false;
-                    _game.Ply++;
-                }
+                    ProcessMove(notation: notation);
                 _fileName = dlgOpen.FileName;
                 PrepareTurn();
             }
@@ -552,11 +556,6 @@ namespace TakGame_WinForms
 
         private void miMoveEnter_Click(object sender, EventArgs e)
         {
-            NewMethod();
-        }
-
-        private void NewMethod()
-        {
             MoveEnterNotation();
         }
 
@@ -566,11 +565,7 @@ namespace TakGame_WinForms
             {
                 if (dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
                 {
-                    var move = dlg.ValidatedMove;
-                    move.MakeMove(_game);
-                    _movesOfNotation[dlg.ValidatedNotation] = move;
-                    _boardView.InvalidateRender();
-                    _game.Ply++;
+                    ProcessMove(move: dlg.ValidatedMove, notation: dlg.ValidatedNotation);
                     PrepareTurn();
                 }
             }
@@ -635,6 +630,11 @@ namespace TakGame_WinForms
             Navigate(_game.Ply);
         }
 
+        string DescribeTurn(int ply)
+        {
+            return string.Format("{0}.{1}", ply / 2 + 1, 1 + (ply & 1));
+        }
+
         bool _navigating = false;
         void Navigate(int ply)
         {
@@ -662,7 +662,7 @@ namespace TakGame_WinForms
 
             if (_game.Ply < _gameRecord.MoveNotations.Count)
             {
-                lblStatus.Text = string.Format("Viewing turn {0}.{1}", ply / 2 + 1, 1 + (ply & 1));
+                lblStatus.Text = string.Concat("Viewing turn ", DescribeTurn(ply));
                 listAiLevel.Enabled = false;
                 btnUndo.Enabled = false;
                 tablePanel.Enabled = false;

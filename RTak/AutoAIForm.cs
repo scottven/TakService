@@ -15,7 +15,7 @@ namespace TakGame_WinForms
     {
         BoardView _boardView;
         GameState _game;
-        TakAI.Evaluator _evaluator;
+        TakAI_V2.Evaluator _evaluator;
         public AutoAIForm()
         {
             InitializeComponent();
@@ -25,8 +25,8 @@ namespace TakGame_WinForms
         {
             base.OnLoad(e);
             _game = GameState.NewGame(5);
-            _ai = new TakAI(_game.Size);
-            _evaluator = new TakAI.Evaluator(_game.Size);
+            _ai = new TakAI_V2(_game.Size);
+            _evaluator = new TakAI_V2.Evaluator(_game.Size);
             _boardView = new BoardView();
             _boardView.Dock = DockStyle.Fill;
             _boardView.Game = _game;
@@ -42,7 +42,7 @@ namespace TakGame_WinForms
                 _boardView.SetHighlight(mouseOver.Value.Position, mouseOver.Value.StackPos);
         }
 
-        TakAI _ai;
+        TakAI_V2 _ai;
         private void timer1_Tick(object sender, EventArgs e)
         {
             timer1.Stop();
