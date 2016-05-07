@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TakEngine
@@ -86,7 +85,7 @@ namespace TakEngine
             int bestEval;
 
 #if MULTITHREADED
-            FindGoodMoveMulti(game, 0, out bestMove, out bestEval);
+            FindGoodMoveMulti(game, 0, out bestMove, out bestEval, false);
             LastEvaluation = bestEval;
 #else
             _singleThreadData.Game = game;
@@ -106,6 +105,16 @@ namespace TakEngine
             }
 
             return bestMove;
+        }
+
+        public ScoreCorral ReportAllMoves(GameState game)
+        {
+            _canceled = _canceling = false;
+            // Don't randomize for this one
+            IMove bestMove;
+            int bestEval;
+
+            return FindGoodMoveMulti(game, 0, out bestMove, out bestEval, true);
         }
 
         /// <summary>
@@ -195,7 +204,7 @@ namespace TakEngine
         /// <summary>
         /// Multithreaded version of the FindGoodMove 
         /// </summary>
-        void FindGoodMoveMulti(GameState game, int depth, out IMove bestMove, out int bestEval)
+        ScoreCorral FindGoodMoveMulti(GameState game, int depth, out IMove bestMove, out int bestEval, bool allMoves)
         {
             if (depth != 0)
                 throw new ApplicationException();
@@ -207,33 +216,19 @@ namespace TakEngine
 
             EnumerateMoves(moves, game, _randomPositions);
 
-            IMove sharedBestMove = null;
-            int sharedBestEval = int.MinValue;
+            ScoreCorral _corral = new ScoreCorral(allMoves);
             object sync = new object();
             Parallel.ForEach<IMove, IterThreadData>(moves,
                 () =>
                 {
                     // Initialize a thread's local data
                     var data = new IterThreadData(game);
-                    lock (sync)
-                    {
-                        data.BestMove = sharedBestMove;
-                        data.BestEval = sharedBestEval;
-                    }
+                    data.BestMove = null;
+                    data.BestEval = int.MinValue;
                     return data;
                 },
                 (move, loopState, data) =>
                 {
-                    // synchronize thread's best move
-                    lock (sync)
-                    {
-                        if (sharedBestEval > data.BestEval)
-                        {
-                            data.BestEval = sharedBestEval;
-                            data.BestMove = sharedBestMove;
-                        }
-                    }
-
                     // make the move
                     move.MakeMove(data.Game);
                     data.Game.Ply++;
@@ -251,24 +246,10 @@ namespace TakEngine
                         FindGoodMove(data, depth + 1, data.BestMove == null ? (int?)null : -data.BestEval, out opmove, out opeval);
                         eval = opeval * -1;
                     }
-                    if (eval > data.BestEval)
-                    {
-                        data.BestEval = eval;
-                        data.BestMove = move;
-                    }
+                    _corral.AddScore(move, eval);
 
                     data.Game.Ply--;
                     move.TakeBackMove(data.Game);
-
-                    // synchronize shared best move
-                    lock (sync)
-                    {
-                        if (data.BestEval > sharedBestEval)
-                        {
-                            sharedBestEval = data.BestEval;
-                            sharedBestMove = data.BestMove;
-                        }
-                    }
 
                     if (gameOver && eval > 0)
                         loopState.Stop();
@@ -280,8 +261,10 @@ namespace TakEngine
                     // do nothing
                 });
 
-            bestMove = sharedBestMove;
-            bestEval = sharedBestEval;
+            bestMove = _corral.bestMove();
+            bestEval = _corral.bestScore();
+
+            return _corral;
         }
 
         /// <summary>
@@ -636,5 +619,84 @@ namespace TakEngine
                 _fillmax.Y = Math.Max(y, _fillmax.Y);
             }
         }
+    }
+
+    /// <summary>
+    /// Accumulates the scores from each of the evaluation threads
+    /// </summary>
+    public class ScoreCorral
+    {
+        object _sync;
+        bool _sortBySpace;
+        class ScoreItem : IComparable
+        {
+            public IMove _move;
+            public int _score;
+            bool _sortBySpace;
+            
+            public ScoreItem(IMove move, int score, bool sortBySpace = false)
+            {
+                _move = move;
+                _score = score;
+                _sortBySpace = sortBySpace;
+            }
+
+            public int CompareTo(Object rhs)
+            {
+                ScoreItem r = (ScoreItem)rhs;
+                if(this._score == r._score && _sortBySpace)
+                {
+                    return this._move.Notate().CompareTo(r._move.Notate());
+                }
+                return this._score.CompareTo(r._score);
+            }
+
+            public string[] ToStringArray()
+            {
+                string[] ret = new string[2];
+                ret[0] = _move.Notate();
+                ret[1] = string.Format("{0}", _score);
+                return ret;
+            }
+        }
+        List<ScoreItem> _scores;
+
+        public ScoreCorral(bool sortBySpace = false)
+        {
+            _sync = new object();
+            _scores = new List<ScoreItem>();
+            _sortBySpace = sortBySpace;
+        }
+
+        public void AddScore(IMove move, int score)
+        {
+            ScoreItem new_item = new ScoreItem(move, score, _sortBySpace);
+            lock (_sync)
+            {
+                //if(_scores.Count < _scores.Capacity)
+                //{
+                _scores.Add(new_item);
+                _scores.Sort();
+                //}
+                //else if (new_item.CompareTo(_scores.Last()) > 0)
+                //{
+                //    _scores[_scores.Count - 1] = new_item;
+                //    _scores.Sort();
+                //}
+            }
+        }
+
+        public string[][] ToStringArray()
+        {
+            string[][] ret = new string[_scores.Count][];
+            for(int i = 0; i < ret.Length; i++)
+            {
+                ret[i] = _scores[i].ToStringArray();
+            }
+            return ret;
+        }
+
+        public IMove bestMove() { lock (_sync) { return _scores.Last()._move; } }
+        public int bestScore() { lock(_sync) { return _scores.Last()._score; } }
     }
 }
