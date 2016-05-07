@@ -107,7 +107,7 @@ namespace TakEngine
             foreach (var notation in _gameRecord.MoveNotations)
             {
                 List<IMove> _tempMoveList = new List<IMove>();
-                TakAI.EnumerateMoves(_tempMoveList, game, normalPositions);
+                TakAI_V3.EnumerateMoves(_tempMoveList, game, normalPositions);
                 var move = notation.MatchLegalMove(_tempMoveList);
                 if (null == move)
                     throw new ApplicationException("Illegal move: " + notation.Text);

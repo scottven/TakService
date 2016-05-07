@@ -11,7 +11,7 @@ namespace TakService
     {
 
         GameState _game;
-        TakAI _ai;
+        TakAI_V3 _ai;
 
         public string GetMove(string ptn = null, string code = null, int aiLevel = 3, int flatScore = 9000, bool tps = false)
         {
@@ -40,6 +40,7 @@ namespace TakService
             try
             {
                 InitGame(code, aiLevel, flatScore, tps);
+                //throw new Exception("no support for All Moves, yet");
                 return _ai.ReportAllMoves(_game).ToStringArray();
             }
             catch (Exception ex)
@@ -67,7 +68,7 @@ namespace TakService
             {
                 _game = GameState.LoadFromPTN(code);
             }
-            _ai = new TakAI(_game.Size, flatScore);
+            _ai = new TakAI_V3(_game.Size, flatScore);
             _ai.MaxDepth = aiLevel;
         }
 
