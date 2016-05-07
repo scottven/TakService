@@ -45,9 +45,9 @@ namespace TakGame_WinForms
                 lblError.Visible = true;
                 return false;
             }
-            var ai = new TakAI(_game.Size);
+            var ai = new TakAI_V2(_game.Size);
             var moves = new List<IMove>();
-            TakAI.EnumerateMoves(moves, _game, ai.NormalPositions);
+            TakAI_V2.EnumerateMoves(moves, _game, ai.NormalPositions);
             ValidatedMove = notated.MatchLegalMove(moves);
             if (ValidatedMove == null)
             {

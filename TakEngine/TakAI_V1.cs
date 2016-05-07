@@ -2,11 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace TakEngine
 {
-    public class TakAI : ITakAI
+    public class TakAI_V1 : ITakAI
     {
         /// <summary>
         /// Default value for the maximum game tree search depth
@@ -44,13 +45,12 @@ namespace TakEngine
         public BoardPosition[] RandomPositions { get { return _randomPositions; } }
         public BoardPosition[] NormalPositions { get { return _normalPositions; } }
         public int LastEvaluation { get; private set; }
-        public string EvalMethod { get { return "InfEval"; } }
-        public TakAI(int boardSize, int maxDepth = DefaultMaxDepth, int flatScore = 9000)
+        public string EvalMethod { get { return "V1"; } }
+        public TakAI_V1(int boardSize, int maxDepth = DefaultMaxDepth)
         {
             _maxDepth = maxDepth;
             _rand = new Random();
             _singleThreadData = new AIThreadData(boardSize);
-            Evaluator.FlatWinEval = flatScore;
 
             // Initialize list of all legal board positions
             _normalPositions = new BoardPosition[boardSize * boardSize];
@@ -86,7 +86,7 @@ namespace TakEngine
             int bestEval;
 
 #if MULTITHREADED
-            FindGoodMoveMulti(game, 0, out bestMove, out bestEval, false);
+            FindGoodMoveMulti(game, 0, out bestMove, out bestEval);
             LastEvaluation = bestEval;
 #else
             _singleThreadData.Game = game;
@@ -106,16 +106,6 @@ namespace TakEngine
             }
 
             return bestMove;
-        }
-
-        public ScoreCorral ReportAllMoves(GameState game)
-        {
-            _canceled = _canceling = false;
-            // Don't randomize for this one
-            IMove bestMove;
-            int bestEval;
-
-            return FindGoodMoveMulti(game, 0, out bestMove, out bestEval, true);
         }
 
         /// <summary>
@@ -142,7 +132,7 @@ namespace TakEngine
 
             var game = data.Game;
             EnumerateMoves(moves, game, _randomPositions);
-
+            
             foreach (var move in moves)
             {
                 move.MakeMove(game);
@@ -205,7 +195,7 @@ namespace TakEngine
         /// <summary>
         /// Multithreaded version of the FindGoodMove 
         /// </summary>
-        ScoreCorral FindGoodMoveMulti(GameState game, int depth, out IMove bestMove, out int bestEval, bool allMoves)
+        void FindGoodMoveMulti(GameState game, int depth, out IMove bestMove, out int bestEval)
         {
             if (depth != 0)
                 throw new ApplicationException();
@@ -217,19 +207,33 @@ namespace TakEngine
 
             EnumerateMoves(moves, game, _randomPositions);
 
-            ScoreCorral _corral = new ScoreCorral(allMoves);
+            IMove sharedBestMove = null;
+            int sharedBestEval = int.MinValue;
             object sync = new object();
             Parallel.ForEach<IMove, IterThreadData>(moves,
                 () =>
                 {
                     // Initialize a thread's local data
                     var data = new IterThreadData(game);
-                    data.BestMove = null;
-                    data.BestEval = int.MinValue;
+                    lock (sync)
+                    {
+                        data.BestMove = sharedBestMove;
+                        data.BestEval = sharedBestEval;
+                    }
                     return data;
                 },
                 (move, loopState, data) =>
                 {
+                    // synchronize thread's best move
+                    lock (sync)
+                    {
+                        if (sharedBestEval > data.BestEval)
+                        {
+                            data.BestEval = sharedBestEval;
+                            data.BestMove = sharedBestMove;
+                        }
+                    }
+
                     // make the move
                     move.MakeMove(data.Game);
                     data.Game.Ply++;
@@ -247,10 +251,24 @@ namespace TakEngine
                         FindGoodMove(data, depth + 1, data.BestMove == null ? (int?)null : -data.BestEval, out opmove, out opeval);
                         eval = opeval * -1;
                     }
-                    _corral.AddScore(move, eval);
+                    if (eval > data.BestEval)
+                    {
+                        data.BestEval = eval;
+                        data.BestMove = move;
+                    }
 
                     data.Game.Ply--;
                     move.TakeBackMove(data.Game);
+
+                    // synchronize shared best move
+                    lock (sync)
+                    {
+                        if (data.BestEval > sharedBestEval)
+                        {
+                            sharedBestEval = data.BestEval;
+                            sharedBestMove = data.BestMove;
+                        }
+                    }
 
                     if (gameOver && eval > 0)
                         loopState.Stop();
@@ -262,10 +280,8 @@ namespace TakEngine
                     // do nothing
                 });
 
-            bestMove = _corral.bestMove();
-            bestEval = _corral.bestScore();
-
-            return _corral;
+            bestMove = sharedBestMove;
+            bestEval = sharedBestEval;
         }
 
         /// <summary>
@@ -335,7 +351,7 @@ namespace TakEngine
             if (!state.IsPositionLegal(targetPos))
                 return;
             var stack = state.Board[targetPos.X, targetPos.Y];
-
+            
             var stacktop = state[targetPos];
             bool flatten = false;
             if (stacktop.HasValue)
@@ -375,7 +391,7 @@ namespace TakEngine
         /// </summary>
         public class Evaluator
         {
-            public static int FlatWinEval;
+            public const int FlatWinEval = 9000;
             FloodFill _flood = new FloodFill();
             int[,] _ids;
 
@@ -386,12 +402,10 @@ namespace TakEngine
             int[] _roadScores = new int[2];
             int _boardSize;
             List<BoardPosition> _edgePositions;
-            int[,] _inf;
 
             public Evaluator(int boardSize)
             {
                 _ids = new int[boardSize, boardSize];
-                _inf = new int[boardSize, boardSize];
                 _boardSize = boardSize;
 
                 // Precalculate list of edge positions to reduce logic that must be executed in every evaluation
@@ -422,10 +436,7 @@ namespace TakEngine
                 // reset island id numbers
                 for (int i = 0; i < game.Size; i++)
                     for (int j = 0; j < game.Size; j++)
-                    {
                         _ids[i, j] = 0;
-                        _inf[i, j] = 0;
-                    }
 
                 // Ensure every flat stone / cap stone on the edges has been assigned an island ID number
                 foreach (var pos in _edgePositions)
@@ -451,7 +462,7 @@ namespace TakEngine
                 {
                     if (_lookup.Contains(_ids[x, game.Size - 1]))
                     {
-                        var player = Piece.GetPlayerID(game[x, game.Size - 1].Value);
+                        var player = Piece.GetPlayerID(game[x,game.Size - 1].Value);
                         _roadScores[player] = 9999 - Math.Min(500, game.Ply);
                     }
                 }
@@ -472,24 +483,10 @@ namespace TakEngine
                     }
                 }
 
-                
-
                 int score = _roadScores[0] - _roadScores[1];
                 if (score != 0)
                 {
                     eval = score;
-                    gameOver = true;
-                    return;
-                }
-                else if (_roadScores[0] > 0 && (game.Ply & 1) == 1)
-                {
-                    eval = _roadScores[0];
-                    gameOver = true;
-                    return;
-                }
-                else if (_roadScores[1] > 0 && (game.Ply & 1) == 0)
-                {
-                    eval = -_roadScores[1];
                     gameOver = true;
                     return;
                 }
@@ -504,7 +501,7 @@ namespace TakEngine
                             var piece = stack[j];
                             int pts = 0;
                             if (Piece.GetStone(piece) == Piece.Stone_Flat)
-                                pts = 2;
+                                pts = 1;
                             var player = Piece.GetPlayerID(piece);
                             if (player != 0)
                                 pts *= -1;
@@ -512,16 +509,6 @@ namespace TakEngine
                             {
                                 score += pts;
                                 pts *= 10;
-
-                                int infadd = 1 - player * 2;
-                                if (x > 0)
-                                    _inf[x - 1, y] += infadd;
-                                if (y > 0)
-                                    _inf[x, y - 1] += infadd;
-                                if (x < game.Size - 1)
-                                    _inf[x + 1, y] += infadd;
-                                if (y < game.Size - 1)
-                                    _inf[x, y + 1] += infadd;
                             }
                             else if (player == Piece.GetPlayerID(stack[stack.Count - 1]))
                                 pts *= 2;
@@ -531,16 +518,8 @@ namespace TakEngine
                             foundEmpty = true;
                     }
 
-                for (int y = 0; y < game.Size; y++)
-                    for (int x = 0; x < game.Size; x++)
-                    {
-                        var stack = game.Board[x, y];
-                        if (stack.Count == 0)
-                            eval += _inf[x, y];
-                    }
-
-                if (!foundEmpty ||
-                    (game.StonesRemaining[0] + game.CapRemaining[0]) == 0 ||
+                if (!foundEmpty || 
+                    (game.StonesRemaining[0] + game.CapRemaining[0]) == 0 || 
                     (game.StonesRemaining[1] + game.CapRemaining[1]) == 0)
                 {
                     gameOver = true;
@@ -574,84 +553,5 @@ namespace TakEngine
                 _ids[x, y] = _fillingid;
             }
         }
-    }
-
-    /// <summary>
-    /// Accumulates the scores from each of the evaluation threads
-    /// </summary>
-    public class ScoreCorral
-    {
-        object _sync;
-        bool _sortBySpace;
-        class ScoreItem : IComparable
-        {
-            public IMove _move;
-            public int _score;
-            bool _sortBySpace;
-            
-            public ScoreItem(IMove move, int score, bool sortBySpace = false)
-            {
-                _move = move;
-                _score = score;
-                _sortBySpace = sortBySpace;
-            }
-
-            public int CompareTo(Object rhs)
-            {
-                ScoreItem r = (ScoreItem)rhs;
-                if(this._score == r._score && _sortBySpace)
-                {
-                    return this._move.Notate().CompareTo(r._move.Notate());
-                }
-                return this._score.CompareTo(r._score);
-            }
-
-            public string[] ToStringArray()
-            {
-                string[] ret = new string[2];
-                ret[0] = _move.Notate();
-                ret[1] = string.Format("{0}", _score);
-                return ret;
-            }
-        }
-        List<ScoreItem> _scores;
-
-        public ScoreCorral(bool sortBySpace = false)
-        {
-            _sync = new object();
-            _scores = new List<ScoreItem>();
-            _sortBySpace = sortBySpace;
-        }
-
-        public void AddScore(IMove move, int score)
-        {
-            ScoreItem new_item = new ScoreItem(move, score, _sortBySpace);
-            lock (_sync)
-            {
-                //if(_scores.Count < _scores.Capacity)
-                //{
-                _scores.Add(new_item);
-                _scores.Sort();
-                //}
-                //else if (new_item.CompareTo(_scores.Last()) > 0)
-                //{
-                //    _scores[_scores.Count - 1] = new_item;
-                //    _scores.Sort();
-                //}
-            }
-        }
-
-        public string[][] ToStringArray()
-        {
-            string[][] ret = new string[_scores.Count][];
-            for(int i = 0; i < ret.Length; i++)
-            {
-                ret[i] = _scores[i].ToStringArray();
-            }
-            return ret;
-        }
-
-        public IMove bestMove() { lock (_sync) { return _scores.Last()._move; } }
-        public int bestScore() { lock(_sync) { return _scores.Last()._score; } }
     }
 }

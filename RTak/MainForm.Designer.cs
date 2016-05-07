@@ -427,7 +427,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.mainMenu;
             this.Name = "MainForm";
-            this.Text = "Tak";
+            this.Text = "RTak";
             this.panelControls.ResumeLayout(false);
             this.panelControls.PerformLayout();
             this.tablePanel.ResumeLayout(false);

@@ -24,6 +24,27 @@ namespace TakEngine.Notation
         {
         }
 
+        public bool Compare(MoveNotation target)
+        {
+            if (MoveType != target.MoveType)
+                return false;
+            if (MoveType == NotatedMoveType.MoveStack)
+            {
+                if (UnstackDirection != target.UnstackDirection ||
+                    Position != target.Position ||
+                    UnstackCounts.Count != target.UnstackCounts.Count)
+                    return false;
+                for (int i = 0; i < UnstackCounts.Count; i++)
+                    if (UnstackCounts[i] != target.UnstackCounts[i])
+                        return false;
+                return true;
+            }
+            else
+            {
+                return StoneType == target.StoneType && Position == target.Position;
+            }
+        }
+
         public static bool TryParse(string s, out MoveNotation notated)
         {
             notated = null;
@@ -93,10 +114,13 @@ namespace TakEngine.Notation
                     }
                 }
 
-                // Drop count is optional if we're dropping all the stones we picked up on the first hop
-                if (remaining == notated.PickupCount)
+                // Drop count is optional if we're only moving a single stone
+                if (notated.UnstackCounts.Count == 0 && remaining > 0)
+                {
                     notated.UnstackCounts.Add(remaining);
-                else if (remaining != 0)
+                    remaining = 0;
+                }
+                if (remaining != 0)
                     throw new ApplicationException("didn't drop all stones - remaining count: " + remaining.ToString());
                     //return false;
                 return true;
