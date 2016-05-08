@@ -251,7 +251,7 @@ namespace TakEngine
                     data.Game.Ply--;
                     move.TakeBackMove(data.Game);
 
-                    if (gameOver && eval > 0)
+                    if (!allMoves && gameOver && eval > 0)
                         loopState.Stop();
                     return data;
                 },
@@ -676,7 +676,6 @@ namespace TakEngine
                 //if(_scores.Count < _scores.Capacity)
                 //{
                 _scores.Add(new_item);
-                _scores.Sort();
                 //}
                 //else if (new_item.CompareTo(_scores.Last()) > 0)
                 //{
@@ -689,14 +688,18 @@ namespace TakEngine
         public string[][] ToStringArray()
         {
             string[][] ret = new string[_scores.Count][];
-            for(int i = 0; i < ret.Length; i++)
+            lock(_sync)
             {
-                ret[i] = _scores[i].ToStringArray();
+                _scores.Sort();
+                for (int i = 0; i < ret.Length; i++)
+                {
+                    ret[i] = _scores[i].ToStringArray();
+                }
             }
             return ret;
         }
 
-        public IMove bestMove() { lock (_sync) { return _scores.Last()._move; } }
-        public int bestScore() { lock(_sync) { return _scores.Last()._score; } }
+        public IMove bestMove() { lock (_sync) { _scores.Sort(); return _scores.Last()._move; } }
+        public int bestScore() { lock(_sync) { _scores.Sort(); return _scores.Last()._score; } }
     }
 }
